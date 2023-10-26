@@ -1,10 +1,13 @@
 import json
 import os
+import pathlib
 import sys
 import typing
 
 import numpy as np
 import PIL.Image
+import PIL.ImageDraw
+import pyzbar.pyzbar
 
 Side_length = 25
 Tile_side = 5
@@ -12,7 +15,17 @@ PIXEL_SIZE = 10
 WHITE = 255
 BLACK = 0
 UNKNOWN = 128
+# It's weird. When I set Quiet_zone_size to 4 as the specification, pyzbar can
+# not decode.
+Quiet_zone_size = 1
 Fixed_pattern = np.array([[UNKNOWN] * Side_length for _ in range(Side_length)])
+Background = np.full(
+    (
+        Side_length + 2 * Quiet_zone_size,
+        Side_length + 2 * Quiet_zone_size
+    ),
+    WHITE,
+)
 
 
 def initialize_fixed_pattern() -> None:
@@ -80,17 +93,18 @@ def export(image: np.array, filename: str) -> None:
 
 def image_to_pixels(path) -> np.array:
     with PIL.Image.open(path) as im:
+        im = im.convert("L")
         a = np.asarray(im, dtype=np.uint8)
         pixels = np.empty((im.width // PIXEL_SIZE, im.height // PIXEL_SIZE))
         for i, j in np.ndindex(im.height // PIXEL_SIZE, im.width // PIXEL_SIZE):
             pixel = a[
                 i * PIXEL_SIZE: (i + 1) * PIXEL_SIZE,
                 j * PIXEL_SIZE: (j + 1) * PIXEL_SIZE,]
-            pixels[i][j] = WHITE if pixel[0][0] == 1 else BLACK
+            pixels[i][j] = BLACK if pixel[0][0] == 0 else WHITE
     return pixels
 
-test_image = 'game1/de2f0abc.png'
-print(image_to_pixels(test_image))
+# test_image = 'game1/de2f0abc.png'
+# print(image_to_pixels(test_image))
 
 def read_tiles(d: str) -> typing.Dict[str, np.array]:
     result = {}
@@ -130,6 +144,7 @@ def result_to_pixels(
     return pixels
 
 Num_possibilities = 0
+Num_valid_codes = 0
 
 def search(
     row_start: int,
@@ -139,16 +154,40 @@ def search(
     to_be_fitted: typing.Set[str],
 ) -> None:
     global Num_possibilities
+    global Num_valid_codes
     all_done = True
     for l in result:
         if None in l:
             all_done = False
             break
     if all_done:
-        # export(pixels_to_image(result_to_pixels(result, tiles)), f'result-{Num_possibilities}.png')
-        # with open(f'result-{Num_possibilities}.txt', 'w') as f:
-        #     json.dump(result, f)
         Num_possibilities += 1
+        # print(f'{Num_possibilities=}')
+        pixels = result_to_pixels(result, tiles)
+        Background[
+            Quiet_zone_size: Quiet_zone_size + Side_length,
+            Quiet_zone_size: Quiet_zone_size + Side_length
+        ] = pixels
+        decoded = pyzbar.pyzbar.decode(Background)
+        if len(decoded) == 0:
+            return
+        Num_valid_codes += 1
+        print(f'{Num_valid_codes=} {decoded=}')
+        parent_dir = pathlib.Path(f'result-{Num_valid_codes}')
+        os.makedirs(parent_dir)
+        export(pixels_to_image(pixels), parent_dir / 'qrcode.png')
+        export(pixels_to_image(Background), parent_dir / 'qrcode-with_quiet_zone.png')
+        with open(parent_dir / 'result.txt', 'w') as f:
+            json.dump(result, f)
+        os.makedirs(parent_dir / 'tiles')
+        for row in range(Side_length // Tile_side):
+            for column in range(Side_length // Tile_side):
+                name = result[row][column]
+                number = row * (Side_length // Tile_side) + column + 1
+                with PIL.Image.fromarray(pixels_to_image(np.array(tiles[name]))).convert('RGBA') as im:
+                    d = PIL.ImageDraw.Draw(im)
+                    d.text((0, 0), f'{number:02d}', fill=(0, 255, 0, 255), font_size=40)
+                    im.save(f'{parent_dir / "tiles" / name}')
         return
 
     # Find the next unknown tile
@@ -221,6 +260,23 @@ def main() -> None:
     export(pixels_to_image(result_to_pixels(result, tiles)), 'result.png')
     search(0, 0, tiles, result, to_be_fitted)
     print(Num_possibilities)
+
+# One-pixel block and one pixel quiet zone works, decode takes about 1ms.
+# PIXEL_SIZE = 22
+# pixels = image_to_pixels('594.png')
+# print(pixels.shape)
+# print(pixels)
+# export(pixels_to_image(pixels), '594-read.png')
+# # No quiet zone doesn't work.
+# # pixels = pixels[1:26,1:26]
+# # print(pixels.shape)
+# # print(pixels)
+# import time
+# start = time.time()
+# result = pyzbar.pyzbar.decode(pixels)
+# print(type(result), len(result))
+# print(time.time() - start)
+# exit()
 
 if __name__ == "__main__":
     main()

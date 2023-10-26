@@ -1,0 +1,44 @@
+{
+    "data": {
+        "game": [
+            [
+                "qrcode/5/99e7ee00.png",
+                "qrcode/5/b24aa35f.png",
+                "qrcode/5/9310debd.png",
+                "qrcode/5/e097a7bb.png",
+                "qrcode/5/de2f0abc.png"
+            ],
+            [
+                "qrcode/5/531084fe.png",
+                "qrcode/5/171db031.png",
+                "qrcode/5/3256e4d9.png",
+                "qrcode/5/b6d87f03.png",
+                "qrcode/5/6e4e8fc2.png"
+            ],
+            [
+                "qrcode/5/8d3989a5.png",
+                "qrcode/5/307d2979.png",
+                "qrcode/5/1cd9703e.png",
+                "qrcode/5/11d0bf20.png",
+                "qrcode/5/a0728bbc.png"
+            ],
+            [
+                "qrcode/5/806f7b0c.png",
+                "qrcode/5/12f8132b.png",
+                "qrcode/5/acbb01de.png",
+                "qrcode/5/feb236fb.png",
+                "qrcode/5/008fc9a3.png"
+            ],
+            [
+                "qrcode/5/2d46f45a.png",
+                null,
+                "qrcode/5/a3e0d610.png",
+                "qrcode/5/a9b1c184.png",
+                "qrcode/5/c9c917ed.png"
+            ]
+        ],
+        "level": 5
+    },
+    "msg": "succ",
+    "success": true
+}

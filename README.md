@@ -889,6 +889,10 @@ stdbuf -o 0 tr -d '\n' \
 写题解时又写了一会，还差检查二维码能不能解码的部分。放在题解里供参考。
 找到解以后打算生成同名文件，用 Chromium 的 Local Overrides 替换，方便手解华容道。
 
+更新：写好了，效果如图。
+
+![Puzzle with overridden tiles](./22-华维码/overridden.png)
+
 ## 感想
 
 感觉今年变卷了不少（是你太弱了吧）。
